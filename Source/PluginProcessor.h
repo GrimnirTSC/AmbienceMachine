@@ -9,7 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-
+#include <juce_audio_formats/juce_audio_formats.h>
 //==============================================================================
 /**
 */
@@ -19,10 +19,13 @@ class AmbienceMachineAudioProcessor  : public juce::AudioProcessor
                             #endif
 {
 public:
+
+
+
     //==============================================================================
     AmbienceMachineAudioProcessor();
     ~AmbienceMachineAudioProcessor() override;
-
+    
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -55,6 +58,11 @@ public:
     //==============================================================================
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
+
+
+    juce::AudioFormatManager Formatmanager;
+    
+  
 
 private:
     //==============================================================================
