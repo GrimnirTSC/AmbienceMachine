@@ -95,7 +95,14 @@ void AmbienceMachineAudioProcessor::loadFile(const juce::File& file)
     if (reader != nullptr)
     {
         std::unique_ptr<juce::AudioFormatReaderSource> newSource(new juce::AudioFormatReaderSource(reader, true));
+
+        // Set the transport source to the new audio source
         transportSource.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
+
+        // Start playback
+        transportSource.start();
+
+        // Release the previous reader source and assign the new one
         readerSource.reset(newSource.release());
     }
 }
