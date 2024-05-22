@@ -19,8 +19,12 @@ public:
 
 private:
     AmbienceMachineAudioProcessor& audioProcessor;
-    juce::TextButton loadButton{ "Load" };
-    juce::Slider gainSlider;
+    juce::TextButton loadButton1{ "Load" };
+    juce::TextButton loadButton2{ "Load" };
+
+    juce::Slider gainSliderAmbience;
+    juce::Slider gainSliderRain;
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AmbienceMachineAudioProcessorEditor)
 };

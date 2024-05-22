@@ -32,7 +32,9 @@ public:
     void setStateInformation(const void* data, int sizeInBytes) override;
 
     void loadFile(const juce::File& file);
-    void setGain(float gain);
+    void setGainAmbience(float gain);
+    void setGainRain(float gain);
+
 
 private:
     juce::AudioFormatManager formatManager;

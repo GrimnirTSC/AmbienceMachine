@@ -79,12 +79,13 @@ void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
 
     transportSource.getNextAudioBlock(juce::AudioSourceChannelInfo(buffer));
 
-    auto* gainParameter = parameters.getParameter("gain");
-    float currentGain = gainParameter->getValue();
-
+    auto* gainParameterMain = parameters.getParameter("gain");
+    float currentGain = gainParameterMain->getValue();
+    
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
     {
         buffer.applyGain(channel, 0, buffer.getNumSamples(), currentGain);
+
     }
 }
 
@@ -107,7 +108,12 @@ void AmbienceMachineAudioProcessor::loadFile(const juce::File& file)
     }
 }
 
-void AmbienceMachineAudioProcessor::setGain(float gain)
+void AmbienceMachineAudioProcessor::setGainAmbience(float gain)
+{
+    auto* gainParameter = parameters.getParameter("gain");
+    gainParameter->setValueNotifyingHost(gain);
+}
+void AmbienceMachineAudioProcessor::setGainRain(float gain)
 {
     auto* gainParameter = parameters.getParameter("gain");
     gainParameter->setValueNotifyingHost(gain);
