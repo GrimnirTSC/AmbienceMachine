@@ -19,8 +19,8 @@ public:
 
 private:
     AmbienceMachineAudioProcessor& audioProcessor;
-    juce::TextButton loadButton1{ "Load" };
-    juce::TextButton loadButton2{ "Load" };
+    juce::TextButton loadButton1{ "Load Ambience" };
+    juce::TextButton loadButton2{ "Load Rain" };
 
     juce::Slider gainSliderAmbience;
     juce::Slider gainSliderRain;

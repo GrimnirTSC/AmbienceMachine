@@ -1,10 +1,17 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include <typeinfo>
 
 AmbienceMachineAudioProcessor::AmbienceMachineAudioProcessor()
-    : parameters(*this, nullptr, "Parameters", { std::make_unique<juce::AudioParameterFloat>("gain", "Gain", 0.0f, 1.0f, 0.5f) })
+    : parameters(*this, nullptr, "Parameters",
+        {
+            std::make_unique<juce::AudioParameterFloat>("gainAmbience", "Gain Ambience", 0.0f, 1.0f, 0.5f),
+            std::make_unique<juce::AudioParameterFloat>("gainRain", "Gain Rain", 0.0f, 1.0f, 0.5f)
+        })
 {
     formatManager.registerBasicFormats();
+    gainParameterAmbience = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("gainAmbience"));
+    gainParameterRain = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("gainRain"));
 }
 
 AmbienceMachineAudioProcessor::~AmbienceMachineAudioProcessor() {}
@@ -110,13 +117,14 @@ void AmbienceMachineAudioProcessor::loadFile(const juce::File& file)
 
 void AmbienceMachineAudioProcessor::setGainAmbience(float gain)
 {
-    auto* gainParameter = parameters.getParameter("gain");
-    gainParameter->setValueNotifyingHost(gain);
+    if (gainParameterAmbience != nullptr)
+        gainParameterAmbience->setValueNotifyingHost(gain);
 }
+
 void AmbienceMachineAudioProcessor::setGainRain(float gain)
 {
-    auto* gainParameter = parameters.getParameter("gain");
-    gainParameter->setValueNotifyingHost(gain);
+    if (gainParameterRain != nullptr)
+        gainParameterRain->setValueNotifyingHost(gain);
 }
 
 juce::AudioProcessorEditor* AmbienceMachineAudioProcessor::createEditor() { return new AmbienceMachineAudioProcessorEditor(*this); }
