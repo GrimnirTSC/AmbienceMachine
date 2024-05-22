@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="wH5Ahm" name="AmbienceMachine" projectType="audioplug" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
+              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
+              defines="JUCE_MODAL_LOOPS_PERMITTED=1">
   <MAINGROUP id="IDzHwZ" name="AmbienceMachine">
     <GROUP id="{8FF87B0D-46E6-F2FE-E874-31D1F815D996}" name="Source">
       <FILE id="ZwhrZi" name="PluginProcessor.cpp" compile="1" resource="0"

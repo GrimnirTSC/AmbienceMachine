@@ -1,47 +1,52 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin editor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//==============================================================================
-AmbienceMachineAudioProcessorEditor::AmbienceMachineAudioProcessorEditor (AmbienceMachineAudioProcessor& p)
-    : AudioProcessorEditor (&p), 
-    audioProcessor (p), 
-    PlayButton("Play"), 
-    StopButton("Stop"), 
-    OpenButton("Open")
-
-    
+AmbienceMachineAudioProcessorEditor::AmbienceMachineAudioProcessorEditor(AmbienceMachineAudioProcessor& p)
+    : AudioProcessorEditor(&p), audioProcessor(p)
 {
-    // Make sure that before the constructor has finished, you've set the
-    // editor's size to whatever you need it to be.
-    setSize (400, 300);
-    addAndMakeVisible(&OpenButton);
+    addAndMakeVisible(loadButton);
+    loadButton.addListener(this);
+
+    addAndMakeVisible(gainSlider);
+    gainSlider.setRange(0.0, 1.0);
+    gainSlider.setValue(0.5);
+    gainSlider.addListener(this);
+
+    setSize(400, 300);
 }
 
 AmbienceMachineAudioProcessorEditor::~AmbienceMachineAudioProcessorEditor()
 {
 }
 
-//==============================================================================
-void AmbienceMachineAudioProcessorEditor::paint (juce::Graphics& g)
+void AmbienceMachineAudioProcessorEditor::paint(juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
-
-    //g.setColour (juce::Colours::white);
-    //g.setFont (15.0f);
-    //g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
-  /*  PlayButton.setColour();*/
+    g.fillAll(juce::Colours::black);
 }
 
 void AmbienceMachineAudioProcessorEditor::resized()
 {
-    OpenButton.setBounds(10, 10, getWidth() - 20, 30);
+    loadButton.setBounds(10, 10, getWidth() - 20, 30);
+    gainSlider.setBounds(10, 50, getWidth() - 20, 30);
+}
+
+void AmbienceMachineAudioProcessorEditor::buttonClicked(juce::Button* button)
+{
+    if (button == &loadButton)
+    {
+        juce::FileChooser chooser("Select an ambience file...");
+        if (chooser.browseForFileToOpen())
+        {
+            auto file = chooser.getResult();
+            audioProcessor.loadFile(file);
+        }
+    }
+}
+
+void AmbienceMachineAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
+{
+    if (slider == &gainSlider)
+    {
+        audioProcessor.setGain(slider->getValue());
+    }
 }

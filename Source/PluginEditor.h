@@ -1,40 +1,26 @@
-/*
-  ==============================================================================
-
-    This file contains the basic framework code for a JUCE plugin editor.
-
-  ==============================================================================
-*/
-
 #pragma once
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
-//==============================================================================
-/**
-*/
-class AmbienceMachineAudioProcessorEditor  : public juce::AudioProcessorEditor
+class AmbienceMachineAudioProcessorEditor : public juce::AudioProcessorEditor,
+    public juce::Button::Listener,
+    public juce::Slider::Listener
 {
 public:
-    AmbienceMachineAudioProcessorEditor (AmbienceMachineAudioProcessor&);
+    AmbienceMachineAudioProcessorEditor(AmbienceMachineAudioProcessor&);
     ~AmbienceMachineAudioProcessorEditor() override;
 
-    //==============================================================================
-    void paint (juce::Graphics&) override;
+    void paint(juce::Graphics&) override;
     void resized() override;
 
+    void buttonClicked(juce::Button* button) override;
+    void sliderValueChanged(juce::Slider* slider) override;
+
 private:
-
-    // This reference is provided as a quick way for your editor to
-    // access the processor object that created it.
     AmbienceMachineAudioProcessor& audioProcessor;
+    juce::TextButton loadButton{ "Load" };
+    juce::Slider gainSlider;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (AmbienceMachineAudioProcessorEditor)
-
-    juce::TextButton OpenButton;
-    juce::TextButton PlayButton;
-    juce::TextButton StopButton;
-
-
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AmbienceMachineAudioProcessorEditor)
 };
