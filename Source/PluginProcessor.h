@@ -31,15 +31,17 @@ public:
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
 
-    void loadFile(const juce::File& file);
+    void loadAmbienceFile(const juce::File& file);
+    void loadRainFile(const juce::File& file);
     void setGainAmbience(float gain);
     void setGainRain(float gain);
 
-
 private:
     juce::AudioFormatManager formatManager;
-    std::unique_ptr<juce::AudioFormatReaderSource> readerSource;
-    juce::AudioTransportSource transportSource;
+    std::unique_ptr<juce::AudioFormatReaderSource> readerSourceAmbience;
+    std::unique_ptr<juce::AudioFormatReaderSource> readerSourceRain;
+    juce::AudioTransportSource transportSourceAmbience;
+    juce::AudioTransportSource transportSourceRain;
     juce::AudioProcessorValueTreeState parameters;
     juce::AudioParameterFloat* gainParameterAmbience;
     juce::AudioParameterFloat* gainParameterRain;
