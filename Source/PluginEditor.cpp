@@ -4,20 +4,23 @@
 AmbienceMachineAudioProcessorEditor::AmbienceMachineAudioProcessorEditor(AmbienceMachineAudioProcessor& p)
     : AudioProcessorEditor(&p), audioProcessor(p)
 {
+
     addAndMakeVisible(loadButtonAmbience);
     loadButtonAmbience.addListener(this);
 
     addAndMakeVisible(gainSliderAmbience);
     gainSliderAmbience.setRange(0.0, 1.0);
-    gainSliderAmbience.setValue(0.5);
-    gainSliderAmbience.addListener(this);
+    if (auto* gainParam = p.parameters.getRawParameterValue("gainAmbience"))
+    {
+        gainSliderAmbience.setValue(*gainParam); // Set slider value to the parameter's current value
+    }    gainSliderAmbience.addListener(this);
 
     addAndMakeVisible(loadButtonRain);
     loadButtonRain.addListener(this);
 
     addAndMakeVisible(gainSliderRain);
     gainSliderRain.setRange(0.0, 1.0);
-    gainSliderRain.setValue(0.5);
+    //gainSliderRain.setValue(audioProcessor.parameter.getParameter("gainRain")->getValue());
     gainSliderRain.addListener(this);
 
     setSize(800, 600);
@@ -64,6 +67,7 @@ void AmbienceMachineAudioProcessorEditor::buttonClicked(juce::Button* button)
     }
 }
 
+
 void AmbienceMachineAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
 {
     if (slider == &gainSliderAmbience)
@@ -74,6 +78,6 @@ void AmbienceMachineAudioProcessorEditor::sliderValueChanged(juce::Slider* slide
     else if (slider == &gainSliderRain)
     {
         DBG("Rain gain slider value changed: " + juce::String(slider->getValue()));
-        audioProcessor.setGainRain(slider->getValue());
+        audioProcessor.setGainRain(slider->getValue(), slider->getValue());
     }
 }
