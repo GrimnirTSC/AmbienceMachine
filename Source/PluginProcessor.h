@@ -3,7 +3,6 @@
 #include <JuceHeader.h>
 #include <juce_dsp/juce_dsp.h>
 
-
 class AmbienceMachineAudioProcessor : public juce::AudioProcessor
 {
 public:
@@ -36,12 +35,11 @@ public:
     void loadAmbienceFile(const juce::File& file);
     void loadRainFile(const juce::File& file);
     void setGainAmbience(float gain);
-    void setGainRain(float gain,float highpass);
+    void setGainRain(float gain, float highpass);
     const int getParameterIDGainAmbience() const;
     juce::AudioProcessorValueTreeState parameters;
 
 private:
-    //juce::dsp::ProcessorChain<juce::dsp::Gain<float>, juce::dsp::IIR::Filter<float>> highPassChain;
 
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSourceAmbience;
@@ -51,6 +49,7 @@ private:
     juce::AudioParameterFloat* gainParameterAmbience;
     juce::AudioParameterFloat* gainParameterRain;
     juce::AudioParameterFloat* highpassParameterRain;
+    juce::dsp::IIR::Filter<float> highPassFilter;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AmbienceMachineAudioProcessor)
 };

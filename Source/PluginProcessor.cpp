@@ -6,17 +6,13 @@ AmbienceMachineAudioProcessor::AmbienceMachineAudioProcessor()
         {
             std::make_unique<juce::AudioParameterFloat>("gainAmbience", "Gain Ambience", 0.0f, 1.0f, 0.5f),
             std::make_unique<juce::AudioParameterFloat>("gainRain", "Gain Rain", 0.0f, 1.0f, 0.5f),
-            std::make_unique<juce::AudioParameterFloat>("higpassRain", "Highpass Rain", 0.0f, 1.0f, 0.5f)
-
-
+            std::make_unique<juce::AudioParameterFloat>("highpassRain", "Highpass Rain", 0.0f, 1.0f, 0.5f)
         })
 {
     formatManager.registerBasicFormats();
     gainParameterAmbience = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("gainAmbience"));
     gainParameterRain = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("gainRain"));
-    highpassParameterRain = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("higpassRain"));
-    //highPassChain.get<1>().coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(getSampleRate(), 1000.0f);
-
+    highpassParameterRain = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("highpassRain"));
 }
 
 AmbienceMachineAudioProcessor::~AmbienceMachineAudioProcessor() {}
@@ -33,35 +29,35 @@ void AmbienceMachineAudioProcessor::setCurrentProgram(int index) {}
 const juce::String AmbienceMachineAudioProcessor::getProgramName(int index) { return juce::String(); }
 void AmbienceMachineAudioProcessor::changeProgramName(int index, const juce::String& newName) {}
 
-//code responsible for storing parameter values 
 void AmbienceMachineAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     juce::ValueTree state = parameters.copyState();
-
-    // Convert the ValueTree object to binary data and store it in destData
     juce::MemoryOutputStream mos(destData, true);
     state.writeToStream(mos);
 }
-void AmbienceMachineAudioProcessor::setStateInformation(const void* data, int sizeInBytes) 
-{
-    // Convert the binary data in data to a ValueTree object
-    juce::ValueTree state = juce::ValueTree::readFromData(data, sizeInBytes);
 
-    // Check if the ValueTree is valid
+void AmbienceMachineAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
+{
+    juce::ValueTree state = juce::ValueTree::readFromData(data, sizeInBytes);
     if (state.isValid())
     {
-        // Apply the state to the parameters object
         parameters.replaceState(state);
     }
-
 }
-
 
 void AmbienceMachineAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     transportSourceAmbience.prepareToPlay(samplesPerBlock, sampleRate);
     transportSourceRain.prepareToPlay(samplesPerBlock, sampleRate);
- 
+
+    juce::dsp::ProcessSpec spec;
+    spec.sampleRate = sampleRate;
+    spec.maximumBlockSize = static_cast<juce::uint32>(samplesPerBlock);
+    spec.numChannels = getTotalNumInputChannels();
+    highPassFilter.prepare(spec);
+
+    float cutoffFrequency = 1000.0f;
+    highPassFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, cutoffFrequency);
 }
 
 void AmbienceMachineAudioProcessor::releaseResources()
@@ -69,6 +65,7 @@ void AmbienceMachineAudioProcessor::releaseResources()
     transportSourceAmbience.releaseResources();
     transportSourceRain.releaseResources();
 }
+
 void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
@@ -82,8 +79,8 @@ void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
     {
         juce::AudioSourceChannelInfo bufferToFillAmbience(tempBufferAmbience);
         transportSourceAmbience.getNextAudioBlock(bufferToFillAmbience);
-        float gain = gainParameterAmbience->get(); // Get the current gain value
-        tempBufferAmbience.applyGain(gain); // Apply the gain regardless of its value
+        float gain = gainParameterAmbience->get();
+        tempBufferAmbience.applyGain(gain);
     }
 
     if (readerSourceRain.get() != nullptr)
@@ -92,15 +89,11 @@ void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
         transportSourceRain.getNextAudioBlock(bufferToFillRain);
         tempBufferRain.applyGain(*gainParameterRain);
 
-        // Apply high-pass filter to each channel of the rain audio buffer
-        // for (int channel = 0; channel < tempBufferRain.getNumChannels(); ++channel)
-        // {
-        //     auto* channelData = tempBufferRain.getWritePointer(channel);
-        //     highPassChain.processSamples(channelData, tempBufferRain.getNumSamples());
-        // }
+        juce::dsp::AudioBlock<float> rainBlock(tempBufferRain);
+        juce::dsp::ProcessContextReplacing<float> context(rainBlock);
+        highPassFilter.process(context);
     }
 
-    // Mix tempBufferAmbience and tempBufferRain into the main buffer
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
     {
         buffer.addFrom(channel, 0, tempBufferAmbience, channel, 0, tempBufferAmbience.getNumSamples());
@@ -108,11 +101,9 @@ void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
     }
 }
 
-
 void AmbienceMachineAudioProcessor::loadAmbienceFile(const juce::File& file)
 {
     auto* reader = formatManager.createReaderFor(file);
-
     if (reader != nullptr)
     {
         std::unique_ptr<juce::AudioFormatReaderSource> newSource(new juce::AudioFormatReaderSource(reader, true));
@@ -125,7 +116,6 @@ void AmbienceMachineAudioProcessor::loadAmbienceFile(const juce::File& file)
 void AmbienceMachineAudioProcessor::loadRainFile(const juce::File& file)
 {
     auto* reader = formatManager.createReaderFor(file);
-
     if (reader != nullptr)
     {
         std::unique_ptr<juce::AudioFormatReaderSource> newSource(new juce::AudioFormatReaderSource(reader, true));
@@ -135,19 +125,21 @@ void AmbienceMachineAudioProcessor::loadRainFile(const juce::File& file)
     }
 }
 
-
 void AmbienceMachineAudioProcessor::setGainAmbience(float gain)
 {
     if (gainParameterAmbience != nullptr)
         gainParameterAmbience->setValueNotifyingHost(gain);
-
 }
 
-void AmbienceMachineAudioProcessor::setGainRain(float gain,float highpass)
+void AmbienceMachineAudioProcessor::setGainRain(float gain, float highpass)
 {
     if (gainParameterRain != nullptr)
         gainParameterRain->setValueNotifyingHost(gain);
+    if (highpassParameterRain != nullptr)
         highpassParameterRain->setValueNotifyingHost(highpass);
+
+    float cutoffFrequency = 20.0f + highpass * 1980.0f;
+    highPassFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(getSampleRate(), cutoffFrequency);
 }
 
 const int AmbienceMachineAudioProcessor::getParameterIDGainAmbience() const
