@@ -6,13 +6,18 @@ AmbienceMachineAudioProcessor::AmbienceMachineAudioProcessor()
         {
             std::make_unique<juce::AudioParameterFloat>("gainAmbience", "Gain Ambience", 0.0f, 1.0f, 0.5f),
             std::make_unique<juce::AudioParameterFloat>("gainRain", "Gain Rain", 0.0f, 1.0f, 0.5f),
-            std::make_unique<juce::AudioParameterFloat>("highpassRain", "Highpass Rain", 0.0f, 1.0f, 0.5f)
+            std::make_unique<juce::AudioParameterFloat>("highpassRain", "Highpass Rain", 0.0f, 1.0f, 0.5f),
+            std::make_unique<juce::AudioParameterFloat>("gainOneshot", "Gain Oneshot", 0.0f, 1.0f, 0.5f)
+
         })
 {
     formatManager.registerBasicFormats();
     gainParameterAmbience = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("gainAmbience"));
     gainParameterRain = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("gainRain"));
+    gainParameterOneshot = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("gainOneshot"));
+
     highpassParameterRain = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("highpassRain"));
+
 }
 
 AmbienceMachineAudioProcessor::~AmbienceMachineAudioProcessor() {}
@@ -49,6 +54,8 @@ void AmbienceMachineAudioProcessor::prepareToPlay(double sampleRate, int samples
 {
     transportSourceAmbience.prepareToPlay(samplesPerBlock, sampleRate);
     transportSourceRain.prepareToPlay(samplesPerBlock, sampleRate);
+    transportSourceOneshot.prepareToPlay(samplesPerBlock, sampleRate);
+
 
     juce::dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
@@ -64,6 +71,7 @@ void AmbienceMachineAudioProcessor::releaseResources()
 {
     transportSourceAmbience.releaseResources();
     transportSourceRain.releaseResources();
+    transportSourceOneshot.releaseResources();
 }
 
 void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -71,9 +79,10 @@ void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
     // Clear main output buffer
     buffer.clear();
 
-    juce::AudioBuffer<float> tempBufferAmbience, tempBufferRain;
+    juce::AudioBuffer<float> tempBufferAmbience, tempBufferRain, tempBufferOneshot;
     tempBufferAmbience.setSize(buffer.getNumChannels(), buffer.getNumSamples(), false, true, true);
     tempBufferRain.setSize(buffer.getNumChannels(), buffer.getNumSamples(), false, true, true);
+    tempBufferOneshot.setSize(buffer.getNumChannels(), buffer.getNumSamples(), false, true, true);
 
     // Process ambience if source is valid
     if (readerSourceAmbience.get() != nullptr)
@@ -98,11 +107,52 @@ void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
         highPassFilter.process(context);
     }
 
-    // Add processed buffers to main output buffer using copyFrom
+    if (readerSourceOneshot.get() != nullptr)
+    {
+        juce::AudioSourceChannelInfo bufferToFillOneshot(tempBufferOneshot);
+        transportSourceOneshot.getNextAudioBlock(bufferToFillOneshot);
+        float gain = gainParameterOneshot->get();
+        tempBufferOneshot.applyGain(gain);
+
+        // Check if oneshot playback has completed
+        if (transportSourceOneshot.getNextReadPosition() >= transportSourceOneshot.getTotalLength())
+        {
+            // Start delay countdown
+            if (!isWaitingForRestart)
+            {
+                isWaitingForRestart = true;
+                restartTime = juce::Time::getMillisecondCounterHiRes() / 1000.0 + delayTimeInSeconds; // Calculate end time
+            }
+
+            // Check if delay time has passed
+            if (isWaitingForRestart && juce::Time::getMillisecondCounterHiRes() / 1000.0 >= restartTime)
+            {
+                // Stop waiting and restart the transport
+                isWaitingForRestart = false;
+                transportSourceOneshot.setPosition(0);  // Set position to start
+                transportSourceOneshot.start();
+            }
+        }
+        else
+        {
+            // If oneshot is still playing, reset the delay state
+            isWaitingForRestart = false;
+        }
+    }
+    else
+    {
+        // If no oneshot is loaded, ensure transport is stopped
+        transportSourceOneshot.stop();
+        isWaitingForRestart = false; // Reset delay state
+    }
+
+
+    // Add processed buffers to main output buffer using addFrom
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
     {
-        buffer.copyFrom(channel, 0, tempBufferAmbience, channel, 0, tempBufferAmbience.getNumSamples());
+        buffer.addFrom(channel, 0, tempBufferAmbience, channel, 0, tempBufferAmbience.getNumSamples());
         buffer.addFrom(channel, 0, tempBufferRain, channel, 0, tempBufferRain.getNumSamples());
+        buffer.addFrom(channel, 0, tempBufferOneshot, channel, 0, tempBufferOneshot.getNumSamples());
     }
 
     // Check for clipping and panning issues
@@ -143,6 +193,18 @@ void AmbienceMachineAudioProcessor::loadRainFile(const juce::File& file)
     }
 }
 
+void AmbienceMachineAudioProcessor::loadOneshotFile(const juce::File& file)
+{
+    auto* reader = formatManager.createReaderFor(file);
+    if (reader != nullptr)
+    {
+        std::unique_ptr<juce::AudioFormatReaderSource> newSource(new juce::AudioFormatReaderSource(reader, true));
+        transportSourceOneshot.setSource(newSource.get(), 0, nullptr, reader->sampleRate);
+        transportSourceOneshot.start();
+        readerSourceOneshot.reset(newSource.release());
+    }
+}
+
 void AmbienceMachineAudioProcessor::setGainAmbience(float gain)
 {
     if (gainParameterAmbience != nullptr)
@@ -161,6 +223,12 @@ void AmbienceMachineAudioProcessor::setGainRain(float gain, float highpass)
     float cutoffFrequency = 20.0f + invertedGain * (10000.0f - 20.0f); // Example mapping: 20 Hz to 10000 Hz
     cutoffFrequency = juce::jlimit(20.0f, 10000.0f, cutoffFrequency); // Ensure within valid range
     highPassFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(getSampleRate(), cutoffFrequency);
+}
+
+void AmbienceMachineAudioProcessor::setGainOneshot(float gain)
+{
+    if (gainParameterOneshot != nullptr)
+        gainParameterOneshot->setValueNotifyingHost(gain);
 }
 
 const int AmbienceMachineAudioProcessor::getParameterIDGainAmbience() const

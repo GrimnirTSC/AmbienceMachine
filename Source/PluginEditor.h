@@ -23,9 +23,12 @@ private:
 
     juce::TextButton loadButtonAmbience{ "Load Ambience" };
     juce::TextButton loadButtonRain{ "Load Rain" };
+    juce::TextButton loadButtonOneshot{ "Load Oneshot" };
+
 
     juce::Slider gainSliderAmbience;
     juce::Slider gainSliderRain;
+    juce::Slider gainSliderOneshot;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AmbienceMachineAudioProcessorEditor)
 };

@@ -34,20 +34,33 @@ public:
 
     void loadAmbienceFile(const juce::File& file);
     void loadRainFile(const juce::File& file);
+    void loadOneshotFile(const juce::File& file);
+
     void setGainAmbience(float gain);
     void setGainRain(float gain, float highpass);
+    void setGainOneshot(float gain);
+
     const int getParameterIDGainAmbience() const;
     juce::AudioProcessorValueTreeState parameters;
 
 private:
 
+    bool isWaitingForRestart = false;
+    double restartTime = 0.0;
+    double delayTimeInSeconds = 1.0;
     juce::AudioFormatManager formatManager;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSourceAmbience;
     std::unique_ptr<juce::AudioFormatReaderSource> readerSourceRain;
+    std::unique_ptr<juce::AudioFormatReaderSource> readerSourceOneshot;
+
     juce::AudioTransportSource transportSourceAmbience;
     juce::AudioTransportSource transportSourceRain;
+    juce::AudioTransportSource transportSourceOneshot;
+
     juce::AudioParameterFloat* gainParameterAmbience;
     juce::AudioParameterFloat* gainParameterRain;
+    juce::AudioParameterFloat* gainParameterOneshot;
+
     juce::AudioParameterFloat* highpassParameterRain;
     juce::dsp::IIR::Filter<float> highPassFilter;
 
