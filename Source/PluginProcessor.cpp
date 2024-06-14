@@ -68,13 +68,14 @@ void AmbienceMachineAudioProcessor::releaseResources()
 
 void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-    juce::ScopedNoDenormals noDenormals;
+    // Clear main output buffer
     buffer.clear();
 
     juce::AudioBuffer<float> tempBufferAmbience, tempBufferRain;
     tempBufferAmbience.setSize(buffer.getNumChannels(), buffer.getNumSamples(), false, true, true);
     tempBufferRain.setSize(buffer.getNumChannels(), buffer.getNumSamples(), false, true, true);
 
+    // Process ambience if source is valid
     if (readerSourceAmbience.get() != nullptr)
     {
         juce::AudioSourceChannelInfo bufferToFillAmbience(tempBufferAmbience);
@@ -83,21 +84,38 @@ void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
         tempBufferAmbience.applyGain(gain);
     }
 
+    // Process rain if source is valid
     if (readerSourceRain.get() != nullptr)
     {
         juce::AudioSourceChannelInfo bufferToFillRain(tempBufferRain);
         transportSourceRain.getNextAudioBlock(bufferToFillRain);
-        tempBufferRain.applyGain(*gainParameterRain);
+        float gain = gainParameterRain->get();
+        tempBufferRain.applyGain(gain);
 
+        // Apply high-pass filter to rain audio buffer
         juce::dsp::AudioBlock<float> rainBlock(tempBufferRain);
         juce::dsp::ProcessContextReplacing<float> context(rainBlock);
         highPassFilter.process(context);
     }
 
+    // Add processed buffers to main output buffer using copyFrom
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
     {
-        buffer.addFrom(channel, 0, tempBufferAmbience, channel, 0, tempBufferAmbience.getNumSamples());
+        buffer.copyFrom(channel, 0, tempBufferAmbience, channel, 0, tempBufferAmbience.getNumSamples());
         buffer.addFrom(channel, 0, tempBufferRain, channel, 0, tempBufferRain.getNumSamples());
+    }
+
+    // Check for clipping and panning issues
+    for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+    {
+        for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+        {
+            float sampleValue = buffer.getSample(channel, sample);
+            if (std::abs(sampleValue) > 1.0f)
+            {
+                juce::Logger::outputDebugString("Clipping detected at channel " + juce::String(channel) + ", sample " + juce::String(sample));
+            }
+        }
     }
 }
 
@@ -138,7 +156,10 @@ void AmbienceMachineAudioProcessor::setGainRain(float gain, float highpass)
     if (highpassParameterRain != nullptr)
         highpassParameterRain->setValueNotifyingHost(highpass);
 
-    float cutoffFrequency = 20.0f + highpass * 1980.0f;
+    // Calculate cutoff frequency inversely proportional to gain
+    float invertedGain = 1.0f - gain;
+    float cutoffFrequency = 20.0f + invertedGain * (10000.0f - 20.0f); // Example mapping: 20 Hz to 10000 Hz
+    cutoffFrequency = juce::jlimit(20.0f, 10000.0f, cutoffFrequency); // Ensure within valid range
     highPassFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(getSampleRate(), cutoffFrequency);
 }
 
