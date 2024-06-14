@@ -115,41 +115,46 @@ void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
     {
         juce::AudioSourceChannelInfo bufferToFillOneshot(tempBufferOneshot);
         transportSourceOneshot.getNextAudioBlock(bufferToFillOneshot);
+
         float gain = gainParameterOneshot->get();
-        tempBufferOneshot.applyGain(gain);
+        float randomPan = juce::Random::getSystemRandom().nextFloat() * 20.0f - 10.0f; // Random pan between -10.0 and 10.0
+        float pan = (randomPan + 10.0f) / 20.0f; // Normalize pan to range 0.0 to 1.0
+
+        float leftGain = 1.0f - pan;
+        float rightGain = pan;
+
+        for (int channel = 0; channel < tempBufferOneshot.getNumChannels(); ++channel)
+        {
+            float channelGain = (channel == 0) ? leftGain : rightGain;
+
+            // Apply gain to the channel
+            tempBufferOneshot.applyGain(channel, 0, tempBufferOneshot.getNumSamples(), channelGain);
+        }
 
         // Check if oneshot playback has completed
         if (transportSourceOneshot.getNextReadPosition() >= transportSourceOneshot.getTotalLength())
         {
-            // Start delay countdown
+            // Restart logic
             if (!isWaitingForRestart)
             {
                 isWaitingForRestart = true;
                 restartTime = juce::Time::getMillisecondCounterHiRes() / 1000.0 + FrequencyParameterOneshot->get(); // Calculate end time
             }
 
-            // Check if delay time has passed
+            // Check delay time
             if (isWaitingForRestart && juce::Time::getMillisecondCounterHiRes() / 1000.0 >= restartTime)
             {
-                // Stop waiting and restart the transport
+                // Stop and restart transport
                 isWaitingForRestart = false;
-                transportSourceOneshot.setPosition(0);  // Set position to start
+                transportSourceOneshot.setPosition(0);
                 transportSourceOneshot.start();
             }
         }
         else
         {
-            // If oneshot is still playing, reset the delay state
             isWaitingForRestart = false;
         }
     }
-    else
-    {
-        // If no oneshot is loaded, ensure transport is stopped
-        transportSourceOneshot.stop();
-        isWaitingForRestart = false; // Reset delay state
-    }
-
 
     // Add processed buffers to main output buffer using addFrom
     for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
@@ -171,6 +176,7 @@ void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
             }
         }
     }
+
 }
 
 void AmbienceMachineAudioProcessor::loadAmbienceFile(const juce::File& file)
