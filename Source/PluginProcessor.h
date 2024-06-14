@@ -39,7 +39,7 @@ public:
     void setGainAmbience(float gain);
     void setGainRain(float gain, float highpass);
     void setGainOneshot(float gain);
-
+    void setFrequencyOneshot(float Time);
     const int getParameterIDGainAmbience() const;
     juce::AudioProcessorValueTreeState parameters;
 
@@ -60,6 +60,7 @@ private:
     juce::AudioParameterFloat* gainParameterAmbience;
     juce::AudioParameterFloat* gainParameterRain;
     juce::AudioParameterFloat* gainParameterOneshot;
+    juce::AudioParameterFloat* FrequencyParameterOneshot;
 
     juce::AudioParameterFloat* highpassParameterRain;
     juce::dsp::IIR::Filter<float> highPassFilter;

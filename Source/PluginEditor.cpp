@@ -31,6 +31,10 @@ AmbienceMachineAudioProcessorEditor::AmbienceMachineAudioProcessorEditor(Ambienc
     gainSliderOneshot.setRange(0.0, 1.0);
     gainSliderOneshot.addListener(this);
 
+    addAndMakeVisible(FrequencySliderOneshot);
+    FrequencySliderOneshot.setRange(0.0, 40.0);
+    FrequencySliderOneshot.addListener(this);
+
     setSize(800, 600);
 }
 
@@ -51,6 +55,8 @@ void AmbienceMachineAudioProcessorEditor::resized()
     gainSliderRain.setBounds(10, 130, getWidth() - 20, 30);
     loadButtonOneshot.setBounds(10, 170, getWidth() - 20, 30);
     gainSliderOneshot.setBounds(10, 210, getWidth() - 20, 30);
+    FrequencySliderOneshot.setBounds(10, 240, getWidth() - 20, 30);
+
 }
 
 void AmbienceMachineAudioProcessorEditor::buttonClicked(juce::Button* button)
@@ -99,6 +105,11 @@ void AmbienceMachineAudioProcessorEditor::sliderValueChanged(juce::Slider* slide
     {
         DBG("Rain gain slider value changed: " + juce::String(slider->getValue()));
         audioProcessor.setGainRain(slider->getValue(), slider->getValue());
+    }
+    if (slider == &FrequencySliderOneshot)
+    {
+        DBG("Frequcny slider value changed: " + juce::String(slider->getValue()));
+        audioProcessor.setFrequencyOneshot(slider->getValue());
     }
     else if (slider == &gainSliderOneshot)
     {

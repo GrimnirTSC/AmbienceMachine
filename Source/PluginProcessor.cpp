@@ -7,7 +7,8 @@ AmbienceMachineAudioProcessor::AmbienceMachineAudioProcessor()
             std::make_unique<juce::AudioParameterFloat>("gainAmbience", "Gain Ambience", 0.0f, 1.0f, 0.5f),
             std::make_unique<juce::AudioParameterFloat>("gainRain", "Gain Rain", 0.0f, 1.0f, 0.5f),
             std::make_unique<juce::AudioParameterFloat>("highpassRain", "Highpass Rain", 0.0f, 1.0f, 0.5f),
-            std::make_unique<juce::AudioParameterFloat>("gainOneshot", "Gain Oneshot", 0.0f, 1.0f, 0.5f)
+            std::make_unique<juce::AudioParameterFloat>("gainOneshot", "Gain Oneshot", 0.0f, 1.0f, 0.5f),
+            std::make_unique<juce::AudioParameterFloat>("FrequencyOneshot", "Frequency Oneshot", 0.0f, 40.0f, 0.5f)
 
         })
 {
@@ -17,6 +18,9 @@ AmbienceMachineAudioProcessor::AmbienceMachineAudioProcessor()
     gainParameterOneshot = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("gainOneshot"));
 
     highpassParameterRain = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("highpassRain"));
+
+    FrequencyParameterOneshot = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("FrequencyOneshot"));
+
 
 }
 
@@ -121,7 +125,7 @@ void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
             if (!isWaitingForRestart)
             {
                 isWaitingForRestart = true;
-                restartTime = juce::Time::getMillisecondCounterHiRes() / 1000.0 + delayTimeInSeconds; // Calculate end time
+                restartTime = juce::Time::getMillisecondCounterHiRes() / 1000.0 + FrequencyParameterOneshot->get(); // Calculate end time
             }
 
             // Check if delay time has passed
@@ -230,6 +234,12 @@ void AmbienceMachineAudioProcessor::setGainOneshot(float gain)
     if (gainParameterOneshot != nullptr)
         gainParameterOneshot->setValueNotifyingHost(gain);
 }
+void AmbienceMachineAudioProcessor::setFrequencyOneshot(float time)
+{
+    
+    FrequencyParameterOneshot->setValueNotifyingHost(time);
+}
+
 
 const int AmbienceMachineAudioProcessor::getParameterIDGainAmbience() const
 {

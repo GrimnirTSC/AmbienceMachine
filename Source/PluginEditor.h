@@ -29,6 +29,8 @@ private:
     juce::Slider gainSliderAmbience;
     juce::Slider gainSliderRain;
     juce::Slider gainSliderOneshot;
+    juce::Slider FrequencySliderOneshot;
+
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AmbienceMachineAudioProcessorEditor)
 };
