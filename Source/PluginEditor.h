@@ -2,7 +2,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
-#include "CustomLookAndFeel.h" // Include your custom look-and-feel header here
+#include "CustomLookAndFeel.h"
 #include "VUMeter.h"
 
 class AmbienceMachineAudioProcessorEditor : public juce::AudioProcessorEditor,
@@ -22,7 +22,7 @@ public:
 
 private:
     AmbienceMachineAudioProcessor& audioProcessor;
-    CustomLookAndFeel customLookAndFeel; // Your custom look-and-feel object
+    CustomLookAndFeel customLookAndFeel;
 
     juce::TextButton loadButtonAmbience{ "Load Ambience" };
     juce::TextButton loadButtonRain{ "Load Rain" };

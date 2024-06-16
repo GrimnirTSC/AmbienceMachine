@@ -1,15 +1,14 @@
-// Include necessary headers
+
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "CustomLookAndFeel.h"
 #include "VUMeter.h"
 
 AmbienceMachineAudioProcessorEditor::AmbienceMachineAudioProcessorEditor(AmbienceMachineAudioProcessor& p)
-    : AudioProcessorEditor(&p), audioProcessor(p), customLookAndFeel(), meter(p.analysis)  // Pass p.analysis here
+    : AudioProcessorEditor(&p), audioProcessor(p), customLookAndFeel(), meter(p.analysis)  
 {
     CustomLookAndFeel::setDefaultLookAndFeel(&customLookAndFeel);
 
-    // Set up UI components
     addAndMakeVisible(loadButtonAmbience);
     loadButtonAmbience.addListener(this);
 
@@ -17,7 +16,7 @@ AmbienceMachineAudioProcessorEditor::AmbienceMachineAudioProcessorEditor(Ambienc
     gainSliderAmbience.setRange(0.0, 1.0);
     if (auto* gainParam = p.parameters.getRawParameterValue("gainAmbience"))
     {
-        gainSliderAmbience.setValue(*gainParam); // Set slider value to the parameter's current value
+        gainSliderAmbience.setValue(*gainParam); 
     }
     gainSliderAmbience.addListener(this);
 
@@ -85,18 +84,17 @@ AmbienceMachineAudioProcessorEditor::~AmbienceMachineAudioProcessorEditor()
 void AmbienceMachineAudioProcessorEditor::paint(juce::Graphics& g)
 {
     int editorWidth = getWidth();
-    int editorHeight = getHeight();
 
 
 
     g.fillAll(juce::Colour(245, 240, 235));
     g.fillRect(240, 380, 400, 250);
 
-    // Proceed with drawing operations
+
     g.fillAll(juce::Colours::black);
     g.setColour(juce::Colours::white);
 
-    // Draw rectangles or perform other drawing operations
+
     g.drawRect(0, 0, editorWidth, 190, 2);
     g.drawRect(0, 190, editorWidth - 300, 190, 2);
     g.drawRect(300, 190, editorWidth - 300, 190, 2);

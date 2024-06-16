@@ -1,7 +1,9 @@
 #include "VUMeter.h"
 
 VUMeter::VUMeter(AnalysisData& analysis_) : analysis(analysis_)
+
 {
+
     levelDecay = 1.0f - std::exp(-1.0f / (float(refreshRate) * 0.2f));
     peakDecay = 1.0f - std::exp(-1.0f / (float(refreshRate) * 0.5f));
 
@@ -101,7 +103,7 @@ void VUMeter::updateChannel(Channel& channel, Measurement& measurement)
 {
     float newLevel = measurement.read();
     if (newLevel > channel.level) {
-        channel.level = newLevel;  // instantaneous attack
+        channel.level = newLevel; 
     }
     else {
         channel.level += (newLevel - channel.level) * levelDecay;

@@ -34,22 +34,21 @@ private:
 
     AnalysisData& analysis;
 
-    static constexpr float maxdB = 12.0f;   // highest dB shown
-    static constexpr float mindB = -60.0f;  // lowest dB shown
-    static constexpr float stepdB = 6.0f;   // draw a tick every 6 dB
+    static constexpr float maxdB = 12.0f;  
+    static constexpr float mindB = -60.0f; 
+    static constexpr float stepdB = 6.0f;   
 
     static constexpr float clampdB = -120.0f;
-    static constexpr float clampLevel = 0.000001f;  // -120 dB
+    static constexpr float clampLevel = 0.000001f;  
 
     static constexpr int refreshRate = 60;
     static constexpr int holdMax = refreshRate * 2;
 
-    Channel channels[4];  // L, R, M, S
+    Channel channels[4]; 
+    float maxPos;  
+    float minPos;  
 
-    float maxPos;  // maxdB line
-    float minPos;  // mindB line
-
-    float levelDecay;  // filter coefficients
+    float levelDecay;  
     float peakDecay;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(VUMeter)
