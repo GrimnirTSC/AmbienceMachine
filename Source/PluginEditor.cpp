@@ -1,10 +1,14 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
+#include "CustomLookAndFeel.h" // Include your custom look-and-feel header here
 
 AmbienceMachineAudioProcessorEditor::AmbienceMachineAudioProcessorEditor(AmbienceMachineAudioProcessor& p)
-    : AudioProcessorEditor(&p), audioProcessor(p)
+    : AudioProcessorEditor(&p), audioProcessor(p), customLookAndFeel()
 {
 
+    CustomLookAndFeel::setDefaultLookAndFeel(&customLookAndFeel);
+
+    // Set up UI components
     addAndMakeVisible(loadButtonAmbience);
     loadButtonAmbience.addListener(this);
 
@@ -16,26 +20,51 @@ AmbienceMachineAudioProcessorEditor::AmbienceMachineAudioProcessorEditor(Ambienc
     }
     gainSliderAmbience.addListener(this);
 
+    addAndMakeVisible(ambienceGainLabel);
+
+
     addAndMakeVisible(loadButtonRain);
     loadButtonRain.addListener(this);
 
+
     addAndMakeVisible(gainSliderRain);
     gainSliderRain.setRange(0.0, 1.0);
-    //gainSliderRain.setValue(audioProcessor.parameter.getParameter("gainRain")->getValue());
     gainSliderRain.addListener(this);
+    gainSliderRain.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    gainSliderRain.setTextBoxStyle(juce::Slider::NoTextBox, true, 50, 20);
+
+    rainGainLabel.setText("Intensity Rain", juce::dontSendNotification);
+    rainGainLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(rainGainLabel);
+
+
+    gainSliderAmbience.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    gainSliderAmbience.setTextBoxStyle(juce::Slider::NoTextBox, true, 50, 20);
+    ambienceGainLabel.setText("Gain Ambience", juce::dontSendNotification);
+    ambienceGainLabel.setJustificationType(juce::Justification::centred);
+
 
     addAndMakeVisible(loadButtonOneshot);
-    loadButtonOneshot.addListener(this); // Correct listener added here
+    loadButtonOneshot.addListener(this);
 
     addAndMakeVisible(gainSliderOneshot);
     gainSliderOneshot.setRange(0.0, 1.0);
     gainSliderOneshot.addListener(this);
+    gainSliderOneshot.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    gainSliderOneshot.setTextBoxStyle(juce::Slider::NoTextBox, true, 50, 20);
+    oneshotGainLabel.setText("Gain Oneshot", juce::dontSendNotification);
+    oneshotGainLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(oneshotGainLabel);
 
     addAndMakeVisible(FrequencySliderOneshot);
     FrequencySliderOneshot.setRange(0.0, 40.0);
     FrequencySliderOneshot.addListener(this);
-
-    setSize(800, 600);
+    FrequencySliderOneshot.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    FrequencySliderOneshot.setTextBoxStyle(juce::Slider::NoTextBox, true, 50, 20);
+    oneshotFreqLabel.setText("Frequency Oneshot", juce::dontSendNotification);
+    oneshotFreqLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(oneshotFreqLabel);
+    setSize(600, 600);
 }
 
 AmbienceMachineAudioProcessorEditor::~AmbienceMachineAudioProcessorEditor()
@@ -45,17 +74,30 @@ AmbienceMachineAudioProcessorEditor::~AmbienceMachineAudioProcessorEditor()
 void AmbienceMachineAudioProcessorEditor::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::black);
+    g.setColour(juce::Colours::white);
+    g.drawRect(0, 0, getWidth(), 190, 2);
+    g.drawRect(0, 190, getWidth() - 300, 190, 2);
+    g.drawRect(300, 190, getWidth() - 300, 190, 2);
+    g.drawRect(0, 380, getWidth(), 220, 2);
+
 }
 
 void AmbienceMachineAudioProcessorEditor::resized()
 {
-    loadButtonAmbience.setBounds(10, 10, getWidth() - 20, 30);
-    gainSliderAmbience.setBounds(10, 50, getWidth() - 20, 30);
-    loadButtonRain.setBounds(10, 90, getWidth() - 20, 30);
-    gainSliderRain.setBounds(10, 130, getWidth() - 20, 30);
-    loadButtonOneshot.setBounds(10, 170, getWidth() - 20, 30);
-    gainSliderOneshot.setBounds(10, 210, getWidth() - 20, 30);
-    FrequencySliderOneshot.setBounds(10, 240, getWidth() - 20, 30);
+    loadButtonAmbience.setBounds(70, 50, getWidth() - 150, 30);
+    gainSliderAmbience.setBounds(70, 90, getWidth() - 150, 90);
+    ambienceGainLabel.setBounds(140, 120, getWidth() - 500, 30);
+
+    loadButtonRain.setBounds(10, 220, getWidth() - 350, 30);
+    gainSliderRain.setBounds(10, 260, getWidth() - 350, 90);
+    rainGainLabel.setBounds(85, 340 , getWidth() - 500, 30);
+
+
+    loadButtonOneshot.setBounds(330, 220, getWidth() - 350, 30);
+    FrequencySliderOneshot.setBounds(420, 280, getWidth() - 400, 60);
+    gainSliderOneshot.setBounds(310, 280, getWidth() - 400, 60);
+    oneshotFreqLabel.setBounds(475, 340, getWidth() - 500, 30);
+    oneshotGainLabel.setBounds(355, 340, getWidth() - 500, 30);
 
 }
 
@@ -71,7 +113,7 @@ void AmbienceMachineAudioProcessorEditor::buttonClicked(juce::Button* button)
             audioProcessor.loadAmbienceFile(file);
         }
     }
-    if (button == &loadButtonRain)
+    else if (button == &loadButtonRain)
     {
         juce::FileChooser chooser("Select a rain sound file...");
         if (chooser.browseForFileToOpen())
@@ -93,7 +135,6 @@ void AmbienceMachineAudioProcessorEditor::buttonClicked(juce::Button* button)
     }
 }
 
-
 void AmbienceMachineAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
 {
     if (slider == &gainSliderAmbience)
@@ -101,14 +142,14 @@ void AmbienceMachineAudioProcessorEditor::sliderValueChanged(juce::Slider* slide
         DBG("Ambience gain slider value changed: " + juce::String(slider->getValue()));
         audioProcessor.setGainAmbience(slider->getValue());
     }
-    if (slider == &gainSliderRain)
+    else if (slider == &gainSliderRain)
     {
         DBG("Rain gain slider value changed: " + juce::String(slider->getValue()));
         audioProcessor.setGainRain(slider->getValue(), slider->getValue());
     }
-    if (slider == &FrequencySliderOneshot)
+    else if (slider == &FrequencySliderOneshot)
     {
-        DBG("Frequcny slider value changed: " + juce::String(slider->getValue()));
+        DBG("Frequency slider value changed: " + juce::String(slider->getValue()));
         audioProcessor.setFrequencyOneshot(slider->getValue());
     }
     else if (slider == &gainSliderOneshot)
