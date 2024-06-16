@@ -1,11 +1,12 @@
+// Include necessary headers
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
-#include "CustomLookAndFeel.h" // Include your custom look-and-feel header here
+#include "CustomLookAndFeel.h"
+#include "VUMeter.h"
 
 AmbienceMachineAudioProcessorEditor::AmbienceMachineAudioProcessorEditor(AmbienceMachineAudioProcessor& p)
-    : AudioProcessorEditor(&p), audioProcessor(p), customLookAndFeel()
+    : AudioProcessorEditor(&p), audioProcessor(p), customLookAndFeel(), meter(p.analysis)  // Pass p.analysis here
 {
-
     CustomLookAndFeel::setDefaultLookAndFeel(&customLookAndFeel);
 
     // Set up UI components
@@ -22,10 +23,8 @@ AmbienceMachineAudioProcessorEditor::AmbienceMachineAudioProcessorEditor(Ambienc
 
     addAndMakeVisible(ambienceGainLabel);
 
-
     addAndMakeVisible(loadButtonRain);
     loadButtonRain.addListener(this);
-
 
     addAndMakeVisible(gainSliderRain);
     gainSliderRain.setRange(0.0, 1.0);
@@ -37,12 +36,10 @@ AmbienceMachineAudioProcessorEditor::AmbienceMachineAudioProcessorEditor(Ambienc
     rainGainLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(rainGainLabel);
 
-
     gainSliderAmbience.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
     gainSliderAmbience.setTextBoxStyle(juce::Slider::NoTextBox, true, 50, 20);
     ambienceGainLabel.setText("Gain Ambience", juce::dontSendNotification);
     ambienceGainLabel.setJustificationType(juce::Justification::centred);
-
 
     addAndMakeVisible(loadButtonOneshot);
     loadButtonOneshot.addListener(this);
@@ -64,21 +61,47 @@ AmbienceMachineAudioProcessorEditor::AmbienceMachineAudioProcessorEditor(Ambienc
     oneshotFreqLabel.setText("Frequency Oneshot", juce::dontSendNotification);
     oneshotFreqLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(oneshotFreqLabel);
+
+    TitleLabel.setText("The Great Big AMBIENCE MACHINE", juce::dontSendNotification);
+    TitleLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(TitleLabel);
+
+    addAndMakeVisible(meter);
+    setOpaque(true);
+    setWantsKeyboardFocus(false);
+
+
     setSize(600, 600);
+
 }
 
 AmbienceMachineAudioProcessorEditor::~AmbienceMachineAudioProcessorEditor()
 {
 }
 
+
+
+
 void AmbienceMachineAudioProcessorEditor::paint(juce::Graphics& g)
 {
+    int editorWidth = getWidth();
+    int editorHeight = getHeight();
+
+
+
+    g.fillAll(juce::Colour(245, 240, 235));
+    g.fillRect(240, 380, 400, 250);
+
+    // Proceed with drawing operations
     g.fillAll(juce::Colours::black);
     g.setColour(juce::Colours::white);
-    g.drawRect(0, 0, getWidth(), 190, 2);
-    g.drawRect(0, 190, getWidth() - 300, 190, 2);
-    g.drawRect(300, 190, getWidth() - 300, 190, 2);
-    g.drawRect(0, 380, getWidth(), 220, 2);
+
+    // Draw rectangles or perform other drawing operations
+    g.drawRect(0, 0, editorWidth, 190, 2);
+    g.drawRect(0, 190, editorWidth - 300, 190, 2);
+    g.drawRect(300, 190, editorWidth - 300, 190, 2);
+    g.drawRect(0, 380, editorWidth, 220, 2);
+
 
 }
 
@@ -98,7 +121,9 @@ void AmbienceMachineAudioProcessorEditor::resized()
     gainSliderOneshot.setBounds(310, 280, getWidth() - 400, 60);
     oneshotFreqLabel.setBounds(475, 340, getWidth() - 500, 30);
     oneshotGainLabel.setBounds(355, 340, getWidth() - 500, 30);
-
+    meter.setBounds(0, 380, 100, 220);
+    
+    TitleLabel.setBounds(140, 360, 400, 250);
 }
 
 void AmbienceMachineAudioProcessorEditor::buttonClicked(juce::Button* button)

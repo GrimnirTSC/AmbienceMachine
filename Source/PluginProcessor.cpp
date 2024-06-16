@@ -2,7 +2,12 @@
 #include "PluginEditor.h"
 
 AmbienceMachineAudioProcessor::AmbienceMachineAudioProcessor()
-    : parameters(*this, nullptr, "Parameters",
+    : AudioProcessor(BusesProperties()
+        .withInput("Input", juce::AudioChannelSet::stereo(), true)
+        .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
+    analysis(),
+    parameters(*this, nullptr, "Parameters",
+
         {
             std::make_unique<juce::AudioParameterFloat>("gainAmbience", "Gain Ambience", 0.0f, 1.0f, 0.5f),
             std::make_unique<juce::AudioParameterFloat>("gainRain", "Gain Rain", 0.0f, 1.0f, 0.5f),
@@ -11,6 +16,7 @@ AmbienceMachineAudioProcessor::AmbienceMachineAudioProcessor()
             std::make_unique<juce::AudioParameterFloat>("FrequencyOneshot", "Frequency Oneshot", 0.0f, 40.0f, 0.5f)
 
         })
+   
 {
     formatManager.registerBasicFormats();
     gainParameterAmbience = dynamic_cast<juce::AudioParameterFloat*>(parameters.getParameter("gainAmbience"));
@@ -37,6 +43,8 @@ int AmbienceMachineAudioProcessor::getCurrentProgram() { return 0; }
 void AmbienceMachineAudioProcessor::setCurrentProgram(int index) {}
 const juce::String AmbienceMachineAudioProcessor::getProgramName(int index) { return juce::String(); }
 void AmbienceMachineAudioProcessor::changeProgramName(int index, const juce::String& newName) {}
+
+
 
 void AmbienceMachineAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
@@ -78,6 +86,7 @@ void AmbienceMachineAudioProcessor::releaseResources()
     transportSourceOneshot.releaseResources();
 }
 
+
 void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     // Clear main output buffer
@@ -117,7 +126,7 @@ void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
         transportSourceOneshot.getNextAudioBlock(bufferToFillOneshot);
 
         float gain = gainParameterOneshot->get();
-        float randomPan = juce::Random::getSystemRandom().nextFloat() * 20.0f - 10.0f; // Random pan between -10.0 and 10.0
+        float randomPan = juce::Random::getSystemRandom().nextFloat() * 5.0f - 1.0f; // Random pan between -10.0 and 10.0
         float pan = (randomPan + 10.0f) / 20.0f; // Normalize pan to range 0.0 to 1.0
 
         float leftGain = 1.0f - pan;
@@ -176,9 +185,52 @@ void AmbienceMachineAudioProcessor::processBlock(juce::AudioBuffer<float>& buffe
             }
         }
     }
+    juce::ScopedNoDenormals noDenormals;
+    auto numInputChannels = getTotalNumInputChannels();
+    auto numOutputChannels = getTotalNumOutputChannels();
+    auto numSamples = buffer.getNumSamples();
 
+    // Clear any output channels that don't contain input data.
+    for (auto i = numInputChannels; i < numOutputChannels; ++i) {
+        buffer.clear(i, 0, numSamples);
+    }
+
+    bool stereo = numInputChannels > 1;
+    const float* channelL = buffer.getReadPointer(0);
+    const float* channelR = buffer.getReadPointer(stereo ? 1 : 0);
+
+    float levelL = 0.0f;
+    float levelR = 0.0f;
+    float levelM = 0.0f;
+    float levelS = 0.0f;
+
+    for (int sample = 0; sample < numSamples; ++sample) {
+        float sampleL = channelL[sample];
+        float sampleR = channelR[sample];
+        float sampleM = (sampleL + sampleR) * 0.5f;
+        float sampleS = (sampleL - sampleR) * 0.5f;
+
+        levelL = std::max(levelL, std::abs(sampleL));
+        levelR = std::max(levelR, std::abs(sampleR));
+        levelM = std::max(levelM, std::abs(sampleM));
+        levelS = std::max(levelS, std::abs(sampleS));
+    }
+
+    analysis.levelL.update(levelL);
+    analysis.levelR.update(levelR);
+    analysis.levelM.update(levelM);
+    analysis.levelS.update(levelS);
 }
 
+bool AmbienceMachineAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
+{
+    return layouts.getMainOutputChannelSet() == juce::AudioChannelSet::stereo()
+        || layouts.getMainOutputChannelSet() == juce::AudioChannelSet::mono();
+}
+void AmbienceMachineAudioProcessor::reset()
+{
+    analysis.reset();
+}
 void AmbienceMachineAudioProcessor::loadAmbienceFile(const juce::File& file)
 {
     auto* reader = formatManager.createReaderFor(file);

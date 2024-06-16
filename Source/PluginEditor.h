@@ -3,6 +3,7 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 #include "CustomLookAndFeel.h" // Include your custom look-and-feel header here
+#include "VUMeter.h"
 
 class AmbienceMachineAudioProcessorEditor : public juce::AudioProcessorEditor,
     public juce::Button::Listener,
@@ -17,6 +18,7 @@ public:
 
     void buttonClicked(juce::Button* button) override;
     void sliderValueChanged(juce::Slider* slider) override;
+
 
 private:
     AmbienceMachineAudioProcessor& audioProcessor;
@@ -37,7 +39,9 @@ private:
 
     juce::Label  oneshotFreqLabel;
 
+    juce::Label  TitleLabel;
 
+    VUMeter meter;
 
 
 

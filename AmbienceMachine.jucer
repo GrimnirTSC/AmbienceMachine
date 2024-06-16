@@ -5,6 +5,9 @@
               defines="JUCE_MODAL_LOOPS_PERMITTED=1">
   <MAINGROUP id="IDzHwZ" name="AmbienceMachine">
     <GROUP id="{8FF87B0D-46E6-F2FE-E874-31D1F815D996}" name="Source">
+      <FILE id="oCvV23" name="VUmeter.cpp" compile="1" resource="0" file="Source/VUmeter.cpp"/>
+      <FILE id="F5BPzh" name="VUmeter.h" compile="0" resource="0" file="Source/VUmeter.h"/>
+      <FILE id="Mj5wnV" name="AnalysisData.h" compile="0" resource="0" file="Source/AnalysisData.h"/>
       <FILE id="OSGnuT" name="CustomLookAndFeel.h" compile="0" resource="0"
             file="Source/CustomLookAndFeel.h"/>
       <FILE id="QogE5n" name="CustomLookAndFeel.cpp" compile="1" resource="0"

@@ -96,7 +96,7 @@ public:
         g.setFont(label.getFont());
         g.setColour(label.findColour(juce::Label::textColourId));
         g.drawFittedText(label.getText(), label.getLocalBounds(), label.getJustificationType(),
-            juce::jmax(1, (int)label.getMinimumHorizontalScale()));
+        juce::jmax(1, (int)label.getMinimumHorizontalScale()));
     }
 };
 #pragma once

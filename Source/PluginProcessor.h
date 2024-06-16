@@ -2,12 +2,15 @@
 
 #include <JuceHeader.h>
 #include <juce_dsp/juce_dsp.h>
+#include "AnalysisData.h"
 
 class AmbienceMachineAudioProcessor : public juce::AudioProcessor
 {
 public:
     AmbienceMachineAudioProcessor();
     ~AmbienceMachineAudioProcessor() override;
+
+    bool isBusesLayoutSupported(const BusesLayout& layouts) const override;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -28,6 +31,7 @@ public:
     void setCurrentProgram(int index) override;
     const juce::String getProgramName(int index) override;
     void changeProgramName(int index, const juce::String& newName) override;
+    void reset() override;
 
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
@@ -42,6 +46,8 @@ public:
     void setFrequencyOneshot(float Time);
     const int getParameterIDGainAmbience() const;
     juce::AudioProcessorValueTreeState parameters;
+
+    AnalysisData analysis;
 
 private:
 
@@ -64,6 +70,8 @@ private:
 
     juce::AudioParameterFloat* highpassParameterRain;
     juce::dsp::IIR::Filter<float> highPassFilter;
+
+ 
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(AmbienceMachineAudioProcessor)
 };
