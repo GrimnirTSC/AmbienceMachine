@@ -60,25 +60,15 @@ void AmbienceMachineAudioProcessor::prepareToPlay(double sampleRate, int samples
     transportSourceRain.prepareToPlay(samplesPerBlock, sampleRate);
     transportSourceOneshot.prepareToPlay(samplesPerBlock, sampleRate);
 
-    // Ensure valid spec setup
+
     juce::dsp::ProcessSpec spec;
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = static_cast<juce::uint32>(samplesPerBlock);
     spec.numChannels = getTotalNumInputChannels();
-
-    // Validate spec parameters
-    if (spec.sampleRate <= 0 || spec.maximumBlockSize <= 0 || spec.numChannels <= 0)
-    {
-        // Print error message or handle invalid parameters
-        juce::Logger::writeToLog("Invalid ProcessSpec parameters detected!");
-        return; // Exit early if parameters are invalid
-    }
-
-    // Prepare highpass filter
     highPassFilter.prepare(spec);
 
-    float cutoffFrequency = 10000.0f;
-    highPassFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(spec.sampleRate, cutoffFrequency);
+    float cutoffFrequency = 1000.0f;
+    highPassFilter.coefficients = juce::dsp::IIR::Coefficients<float>::makeHighPass(sampleRate, cutoffFrequency);
 }
 
 void AmbienceMachineAudioProcessor::releaseResources()
